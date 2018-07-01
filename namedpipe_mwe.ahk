@@ -6,6 +6,15 @@ char_size := 1
 
 pipe_name := "\\.\pipe\testpipe"
 
+WriteToPipe(msg) {
+    global pipe
+    global char_size
+    global ptr
+    If !DllCall("WriteFile", ptr, pipe, "str", msg, "uint", (StrLen(msg)+1)*char_size, "uint*", 0, ptr, 0) {
+        MsgBox WriteFile failed: %ErrorLevel%/%A_LastError%
+    }
+}
+
 If ErrorLevel
     ExitApp
 
@@ -14,15 +23,9 @@ DllCall("ConnectNamedPipe", ptr, pipe, ptr, 0)
 return
 
 ^!u::
-    PipeMsg := "-1"
-    If !DllCall("WriteFile", ptr, pipe, "str", PipeMsg, "uint", (StrLen(PipeMsg)+1)*char_size, "uint*", 0, ptr, 0) {
-        MsgBox WriteFile failed: %ErrorLevel%/%A_LastError%
-    }
+    WriteToPipe("-1")
     return
 
 ^!i::
-    PipeMsg := "+1"
-    If !DllCall("WriteFile", ptr, pipe, "str", PipeMsg, "uint", (StrLen(PipeMsg)+1)*char_size, "uint*", 0, ptr, 0) {
-        MsgBox WriteFile failed: %ErrorLevel%/%A_LastError%
-    }
+    WriteToPipe("+1")
     return
