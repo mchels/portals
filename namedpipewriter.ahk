@@ -1,8 +1,7 @@
-Menu, Tray, Icon, shell32.dll, 19
+﻿Menu, Tray, Icon, shell32.dll, 19
 
 ptr := A_PtrSize ? "Ptr" : "UInt"
-; char_size := A_IsUnicode ? 2 : 1
-char_size := 1
+char_size := A_IsUnicode ? 2 : 1
 
 pipe_name := "\\.\pipe\testpipe"
 
@@ -10,7 +9,7 @@ WriteToPipe(msg) {
     global pipe
     global char_size
     global ptr
-    If !DllCall("WriteFile", ptr, pipe, "str", msg, "uint", (StrLen(msg)+1)*char_size, "uint*", 0, ptr, 0) {
+    If !DllCall("WriteFile", ptr, pipe, "str", msg, "uint", StrLen(msg)*char_size, "uint*", 0, ptr, 0) {
         MsgBox WriteFile failed: %ErrorLevel%/%A_LastError%
     }
 }

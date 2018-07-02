@@ -13,10 +13,9 @@ class NamedPipeListener:
         while True:
             try:
                 status, msg = win32file.ReadFile(self.handle, self.n_bytes_to_read)
-                print(status, msg)
-                print(str(msg))
+                logging.debug('Message received: %s', msg)
                 if status != 0:
-                    logging.debug('ReadFile error with status %s. Message was %s', status, msg)
+                    logging.warning('ReadFile error with status %s. Message was %s', status, msg)
                 self.process_msg(msg)
                 continue
             except KeyboardInterrupt:
@@ -50,7 +49,8 @@ class PCListener(NamedPipeListener):
         self.pc = pc
 
     def process_msg(self, msg):
-        drc = int(msg[::2].decode('utf-8'))
+        # Autohotkey sends strings encoded as utf-16 little endian.
+        drc = int(msg.decode('utf-16le'))
         self.pc.snap_active_in_drc(drc)
 
 
