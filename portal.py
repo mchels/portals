@@ -1,6 +1,10 @@
 """
-http://timgolden.me.uk/pywin32-docs/win32gui__WindowFromPoint_meth.html
+TODO:
+- Focus switching is slow. Make it faster.
+- If portal com is desktop, try focusing next portal.
 """
+import pywinauto
+from pywinauto.controls.hwndwrapper import HwndWrapper
 import win32api
 import win32gui
 
@@ -15,6 +19,13 @@ class Portal:
         self.idx = idx
         self.right = left + width
         self.bottom = top + height
+
+    def get_com(self):
+        return get_com(self.left, self.right, self.top, self.bottom)
+
+    def get_hwnd_at_com(self):
+        com = self.get_com()
+        return win32gui.WindowFromPoint(com)
 
     def __str__(self):
         return str(vars(self))
@@ -50,6 +61,17 @@ class PortalController:
         new_portal = self.get_adjacent_portal(drc)
         self.snap_hwnd_to_portal(portal=new_portal)
 
+    def move_focus_in_drc(self, drc):
+        next_portal = self.get_adjacent_portal(drc)
+        new_hwnd = next_portal.get_hwnd_at_com()
+        elem = pywinauto.findwindows.find_elements(handle=new_hwnd)[0]
+        HwndWrapper(elem).set_focus()
+
+
+def hwnd_is_desktop(hwnd):
+    # This is probably not robust.
+    # Consider using win32gui.GetWindowText(desk_num).
+    return hwnd == 65552
 
 def make_portals(n_splits):
     """
@@ -89,6 +111,9 @@ def get_hwnd_com(hwnd=None):
     """ Get window center-of-mass """
     hwnd = win32gui.GetForegroundWindow() if hwnd is None else hwnd
     left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+    return get_com(left, right, top, bottom)
+
+def get_com(left, right, top, bottom):
     x_com = int((left+right)/2)
     y_com = int((top+bottom)/2)
     return x_com, y_com

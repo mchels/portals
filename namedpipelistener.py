@@ -51,7 +51,8 @@ class PCListener(NamedPipeListener):
     def process_msg(self, msg):
         # Autohotkey sends strings encoded as utf-16 little endian.
         drc = int(msg.decode('utf-16le'))
-        self.pc.snap_active_in_drc(drc)
+        # self.pc.snap_active_in_drc(drc)
+        self.pc.move_focus_in_drc(drc)
 
 
 if __name__ == '__main__':
