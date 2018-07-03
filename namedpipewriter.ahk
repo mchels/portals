@@ -17,7 +17,7 @@ WriteToPipe(msg) {
 If ErrorLevel
     ExitApp
 
-pipe := DllCall("CreateNamedPipe", "str", pipe_name, "uint", 3, "uint", 4, "uint", 1, "uint", 65536, "uint", 65536, "uint", 300, ptr, 0, ptr)
+pipe := DllCall("CreateNamedPipe", "str", pipe_name, "uint", 3, "uint", 5, "uint", 1, "uint", 65536, "uint", 65536, "uint", 300, ptr, 0, ptr)
 DllCall("ConnectNamedPipe", ptr, pipe, ptr, 0)
 return
 
