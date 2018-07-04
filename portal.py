@@ -1,7 +1,10 @@
 """
 TODO:
-- Focus switching is slow. Make it faster.
+- Focus switching is slow. Make it faster. It's slow because of the time.sleep
+  calls in mouse.move, win32functions.WaitGuiThreadIdle(self) and
+  time.sleep(Timings.after_setfocus_wait) in HwndWrapper.set_focus.
 - If portal com is desktop, try focusing next portal.
+- Handle focus move when window is maximized.
 """
 import pywinauto
 from pywinauto.controls.hwndwrapper import HwndWrapper
