@@ -65,16 +65,33 @@ class PortalController:
         self.snap_hwnd_to_portal(portal=new_portal)
 
     def move_focus_in_drc(self, drc):
-        next_portal = self.get_adjacent_portal(drc)
-        new_hwnd = next_portal.get_hwnd_at_com()
+        active_portal = self.get_active_portal()
+        active_hwnd = active_portal.get_hwnd_at_com()
+        candidate_portal = active_portal
+        candidate_is_valid = False
+        while not candidate_is_valid:
+            candidate_portal = self.get_adjacent_portal(drc, candidate_portal)
+            candidate_hwnd = candidate_portal.get_hwnd_at_com()
+            candidate_is_valid = hwnd_is_valid(candidate_hwnd, active_hwnd)
+            if candidate_portal == active_portal:
+                # We tried all possibilities and we're back at the start so we
+                # return without doing anything.
+                return
+        new_hwnd = candidate_hwnd
         elem = pywinauto.findwindows.find_elements(handle=new_hwnd)[0]
         HwndWrapper(elem).set_focus()
 
 
+def hwnd_is_valid(candidate_hwnd, active_hwnd):
+    return (not hwnd_is_desktop(candidate_hwnd)) and \
+           (candidate_hwnd != active_hwnd)
+
 def hwnd_is_desktop(hwnd):
     # This is probably not robust.
+    # return hwnd == 65552
     # Consider using win32gui.GetWindowText(desk_num).
-    return hwnd == 65552
+    # For now, we just always return False.
+    return False
 
 def make_portals(n_splits):
     """
