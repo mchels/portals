@@ -3,8 +3,6 @@ TODO:
 - Focus switching is slow. Make it faster. It's slow because of the time.sleep
   calls in mouse.move, win32functions.WaitGuiThreadIdle(self) and
   time.sleep(Timings.after_setfocus_wait) in HwndWrapper.set_focus.
-- If portal com is desktop, try focusing next portal.
-- Handle focus move when window is maximized.
 """
 import pywinauto
 from pywinauto.controls.hwndwrapper import HwndWrapper
@@ -78,7 +76,7 @@ class PortalController:
                 # return without doing anything.
                 return
         new_hwnd = candidate_hwnd
-        elem = pywinauto.findwindows.find_elements(handle=new_hwnd)[0]
+        elem = pywinauto.findwindows.find_element(handle=new_hwnd)
         HwndWrapper(elem).set_focus()
 
 
@@ -87,10 +85,17 @@ def hwnd_is_valid(candidate_hwnd, active_hwnd):
            (candidate_hwnd != active_hwnd)
 
 def hwnd_is_desktop(hwnd):
-    # This is probably not robust.
-    # return hwnd == 65552
-    # Consider using win32gui.GetWindowText(desk_num).
-    # For now, we just always return False.
+    """
+    Check whether hwnd is the desktop.
+    This method is suspected to be unstable. Ideally we would want to do
+    something like comparing elem.class_name with #32769:
+    https://docs.microsoft.com/en-us/windows/desktop/winmsg/about-window-classes
+    We can get the element with class_name #32769 with pywinauto's
+    pywinauto.win32functions.GetDesktopWindow.
+    """
+    elem = pywinauto.findwindows.find_element(handle=hwnd)
+    if (elem.class_name == 'SysListView32') and (elem.name == 'FolderView'):
+        return True
     return False
 
 def make_portals(n_splits):
