@@ -23,5 +23,5 @@ cmd = [str(args.ahk_exe_path), '/restart', str(ahk_script_path)]
 process = subprocess.Popen(cmd)
 time.sleep(0.5) # To allow Autohotkey to open before we query the pipe.
 PC = PortalController(n_splits=2)
-pc_listener = PCListener(PC, pipename)
+pc_listener = PCListener(PC, pipename, ahk_process=process)
 pc_listener.listen()

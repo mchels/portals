@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+
 import win32file
 
 import utils
@@ -45,9 +46,10 @@ class PCListener(NamedPipeListener):
     Listens for messages from Autohotkey and causes a PortalController to do
     things.
     """
-    def __init__(self, pc, *args, **kwargs):
+    def __init__(self, pc, *args, ahk_process=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.pc = pc
+        self.ahk_process = ahk_process
 
     def process_msg(self, msg_raw):
         # Autohotkey sends strings encoded as utf-16 little endian.
@@ -65,6 +67,7 @@ class PCListener(NamedPipeListener):
                             f'signature of method {method}.')
             return
 
-    @staticmethod
-    def exit():
+    def exit(self):
+        if self.ahk_process:
+            self.ahk_process.kill()
         sys.exit()
