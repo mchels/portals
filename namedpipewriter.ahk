@@ -45,12 +45,16 @@ WriteToPipe(msg) {
 }
 
 ^!u::
-    WriteToPipe("-1")
+    msg := "{""method"": ""snap_active_in_drc"", ""args"": [-1]}"
+    WriteToPipe(msg)
     return
 
 ^!i::
-    WriteToPipe("+1")
+    msg := "{""method"": ""snap_active_in_drc"", ""args"": [1]}"
+    WriteToPipe(msg)
     return
 
 ^F12::
-    WriteToPipe("Quit")
+    msg := "{""method"": ""exit"", ""args"": []}"
+    WriteToPipe(msg)
+    return
