@@ -1,7 +1,6 @@
 from ctypes import windll
 from ctypes import GetLastError
 
-import pywinauto
 import win32api
 import win32gui
 
@@ -149,14 +148,15 @@ def hwnd_is_valid(candidate_hwnd, active_hwnd):
 def hwnd_is_desktop(hwnd):
     """
     Check whether hwnd is the desktop.
-    This method is suspected to be unstable. Ideally we would want to do
-    something like comparing elem.class_name with #32769:
+    This function is suspected to be unstable. Ideally we would want to do
+    something like comparing class_name with #32769:
     https://docs.microsoft.com/en-us/windows/desktop/winmsg/about-window-classes
     We can get the element with class_name #32769 with pywinauto's
     pywinauto.win32functions.GetDesktopWindow.
     """
-    elem = pywinauto.findwindows.find_element(handle=hwnd)
-    if (elem.class_name == 'SysListView32') and (elem.name == 'FolderView'):
+    class_name = win32gui.GetClassName(hwnd)
+    name = win32gui.GetWindowText(hwnd)
+    if (class_name == 'SysListView32') and (name == 'FolderView'):
         return True
     return False
 
