@@ -1,19 +1,16 @@
-# Use
-1) Run `AutoHotkey.exe C:\git_repos\portals\namedpipe_mwe.ahk`.
-2) Run `python namedpipelistener.py`.
-3) Press Ctrl+Alt+u and Ctrl+Alt+i to move active window.
+# Functionality
+An Autohotkey script listen for keystrokes and forwards them to Python via a NamedPipe which takes a window management action. Currently actions include snapping windows and moving focus.
+
 
 # Known issues
-Switching focus is currently slow because it uses pywinauto's set_focus. We
-know that it *can* be fast since Autohotkey's Winactivate is fast. Apart from
-the fact that set_focus is slow it also moves the mouse off-screen. I've tested
-that this is necessary for focus switching to work (!)
-Source for Autohotkey's Winactivate and related functions:
-https://github.com/Lexikos/AutoHotkey_L/blob/15ac5cf2d26e73a98897d99fab56ec8af96c03ad/source/window.cpp#L24
-https://github.com/Lexikos/AutoHotkey_L/blob/15ac5cf2d26e73a98897d99fab56ec8af96c03ad/source/window.cpp#L147
-Another implementation:
-https://stackoverflow.com/questions/916259/win32-bring-a-window-to-top
-Options:
-- Find a better Python solution.
-- Figure out what exactly the Autohotkey script is doing and redo it in Python.
-- Use the Autohotkey C++ code or the other C++ implementatin.
+- When moving focus between two cmd.exe windows the move_focus command must be run twice to take effect.
+
+
+# Background
+Autohotkey is excellent at capturing keystrokes without interfering with built-in functionality. Python is an excellent scripting language. The combination is even excellenter.
+
+
+# Related projects
+- `petronia` is similar, but does too many things for my taste. I *think* it also doesn't capture keystrokes as well as Autohotkey. The "portals" name is taken from this project as well.
+https://github.com/groboclown/petronia
+- The `keyboard` package comes really close to being a replacement for Autohotkey, but doesn't quite perform as well for, e.g., windows keys: https://github.com/boppreh/keyboard
