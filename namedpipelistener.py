@@ -3,6 +3,8 @@ import logging
 import sys
 import win32file
 
+import utils
+
 
 class NamedPipeListener:
     def __init__(self, pipename, n_bytes_to_read=4096):
@@ -52,26 +54,17 @@ class PCListener(NamedPipeListener):
         msg = msg_raw.decode('utf-16le')
         msg_dict = json.loads(msg)
         try:
-            requested_method = getattr(self, msg_dict['method'])
+            method, args = utils.parse_method_and_args(self, msg_dict)
         except AttributeError:
             logging.warning(f'Requested method in dictionary {msg_dict} not found.')
             return
-        args = msg_dict['args']
         try:
-            requested_method(*args)
+            method(*args)
         except TypeError:
             logging.warning(f'Arguments {args} are inconsistent with the '
-                            f'signature of method {requested_method}.')
+                            f'signature of method {method}.')
             return
 
     @staticmethod
     def exit():
         sys.exit()
-
-    # Ugly fixes for not bothering to recursively doing getattr for elements in
-    # incoming json.
-    def move_focus_in_drc(self, drc):
-        return self.pc.move_focus_in_drc(drc)
-
-    def snap_active_in_drc(self, drc):
-        return self.pc.snap_active_in_drc(drc)
