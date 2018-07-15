@@ -13,6 +13,8 @@ HWND_TOPMOST = -1
 HWND_NOTOPMOST = -2
 # https://msdn.microsoft.com/en-us/library/windows/desktop/ms681382(v=vs.85).aspx
 ERROR_INVALID_PARAMETER = 87
+SW_MAXIMIZE = 3
+SW_RESTORE = 9
 
 
 class Portal:
@@ -60,11 +62,43 @@ class PortalController:
                               portal.width, portal.height, SWP_NOZORDER)
 
     def snap_active_in_drc(self, drc):
-        """
-        drc: +1 (right) or -1 (left)
-        """
-        new_portal = self.get_adjacent_portal(drc)
+        """ drc: +1 (right) or -1 (left) """
+        hwnd = win32gui.GetForegroundWindow()
+        if is_maximized(hwnd):
+            cur_portal = self.get_active_portal()
+            new_portal = self.get_next_portal_on_monitor(cur_portal, drc)
+            win32gui.ShowWindow(hwnd, SW_RESTORE)
+        elif not self.hwnd_is_snapped_to_portal():
+            # self.snap_hwnd_to_portal()
+            new_portal = self.get_active_portal()
+        else:
+            new_portal = self.get_adjacent_portal(drc)
         self.snap_hwnd_to_portal(portal=new_portal)
+
+    def get_next_portal_on_monitor(self, portal, drc):
+        """
+        Gets the portal adjacent to `portal` in direction `drc` but only if
+        they are on the same monitor. Otherwise `portal` is returned.
+        """
+        candidate_portal = self.portals[portal.idx+drc]
+        if candidate_portal.mon_idx == portal.mon_idx:
+            return candidate_portal
+        return portal
+
+    def hwnd_is_snapped_to_portal(self, hwnd=None, portal=None):
+        portal = self.get_active_portal() if portal is None else portal
+        hwnd = win32gui.GetForegroundWindow() if hwnd is None else hwnd
+        rect = win32gui.GetWindowRect(hwnd)
+        left = rect[0]
+        top = rect[1]
+        right = rect[2]
+        bottom = rect[3]
+        if ((portal.left == left) and (portal.top == top) and
+            (portal.right == right) and (portal.bottom == bottom)):
+            print(True)
+            return True
+        print(False)
+        return False
 
     def move_focus_in_drc(self, drc):
         active_portal = self.get_active_portal()
@@ -188,6 +222,12 @@ def point_in_portal(point, portal):
     x_in_portal = (x_com >= portal.left) and (x_com <= portal.right)
     y_in_portal = (y_com >= portal.top) and (y_com <= portal.bottom)
     return x_in_portal and y_in_portal
+
+def is_maximized(hwnd):
+    temp = win32gui.GetWindowPlacement(hwnd)
+    if temp[1] == SW_MAXIMIZE:
+        return True
+    return False
 
 
 if __name__ == '__main__':

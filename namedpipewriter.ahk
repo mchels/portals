@@ -44,13 +44,23 @@ WriteToPipe(msg) {
     }
 }
 
-^!u::
+#left::
     msg := "{""pc"": {""snap_active_in_drc"": [-1]}}"
     WriteToPipe(msg)
     return
 
-^!i::
+#right::
     msg := "{""pc"": {""snap_active_in_drc"": [1]}}"
+    WriteToPipe(msg)
+    return
+
++#left::
+    msg := "{""pc"": {""move_focus_in_drc"": [-1]}}"
+    WriteToPipe(msg)
+    return
+
++#right::
+    msg := "{""pc"": {""move_focus_in_drc"": [1]}}"
     WriteToPipe(msg)
     return
 
