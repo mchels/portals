@@ -15,7 +15,8 @@ class NamedPipeListener:
                 status, msg = win32file.ReadFile(self.handle, self.n_bytes_to_read)
                 logging.debug('Message received: %s', msg)
                 if status != 0:
-                    logging.warning('ReadFile error with status %s. Message was %s', status, msg)
+                    logging.warning('ReadFile error with status %s. '
+                                    'Message was %s', status, msg)
                 self.process_msg(msg)
                 continue
             except KeyboardInterrupt:
@@ -53,14 +54,3 @@ class PCListener(NamedPipeListener):
         drc = int(msg.decode('utf-16le'))
         # self.pc.snap_active_in_drc(drc)
         self.pc.move_focus_in_drc(drc)
-
-
-if __name__ == '__main__':
-    from portal import PortalController
-
-    PIPENAME = r'\\.\pipe\testpipe'
-    # test_listener = TestListener(PIPENAME)
-    # test_listener.listen()
-    PC = PortalController(n_splits=2)
-    PC_LISTENER = PCListener(PC, PIPENAME)
-    PC_LISTENER.listen()

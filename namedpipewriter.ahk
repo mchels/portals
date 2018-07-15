@@ -5,7 +5,7 @@ PIPE_NOWAIT := 1
 PIPE_TYPE_MESSAGE := 4
 ptr := A_PtrSize ? "Ptr" : "UInt"
 char_size := A_IsUnicode ? 2 : 1
-pipe_name := "\\.\pipe\testpipe"
+pipe_name := "\\.\pipe\ahk_py_pipe"
 
 dwOpenMode := PIPE_ACCESS_OUTBOUND
 dwPipeMode := PIPE_TYPE_MESSAGE + PIPE_NOWAIT
@@ -51,3 +51,6 @@ WriteToPipe(msg) {
 ^!i::
     WriteToPipe("+1")
     return
+
+^F12::
+    WriteToPipe("Quit")
