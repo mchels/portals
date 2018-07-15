@@ -1,13 +1,18 @@
-"""
-TODO:
-- Focus switching is slow. Make it faster. It's slow because of the time.sleep
-  calls in mouse.move, win32functions.WaitGuiThreadIdle(self) and
-  time.sleep(Timings.after_setfocus_wait) in HwndWrapper.set_focus.
-"""
+from ctypes import windll
+from ctypes import GetLastError
+
 import pywinauto
-from pywinauto.controls.hwndwrapper import HwndWrapper
 import win32api
 import win32gui
+
+
+SWP_NOMOVE = 0x0002
+SWP_NOSIZE = 0x0001
+SWP_NOZORDER = 0x0004
+HWND_TOPMOST = -1
+HWND_NOTOPMOST = -2
+# https://msdn.microsoft.com/en-us/library/windows/desktop/ms681382(v=vs.85).aspx
+ERROR_INVALID_PARAMETER = 87
 
 
 class Portal:
@@ -51,9 +56,8 @@ class PortalController:
     def snap_hwnd_to_portal(self, hwnd=None, portal=None):
         portal = self.get_active_portal() if portal is None else portal
         hwnd = win32gui.GetForegroundWindow() if hwnd is None else hwnd
-        # Consider changing to SetWindowPos which has more features and is "better"
-        # http://timgolden.me.uk/pywin32-docs/win32gui__SetWindowPos_meth.html
-        win32gui.MoveWindow(hwnd, portal.left, portal.top, portal.width, portal.height, True)
+        win32gui.SetWindowPos(hwnd, HWND_TOPMOST, portal.left, portal.top,
+                              portal.width, portal.height, SWP_NOZORDER)
 
     def snap_active_in_drc(self, drc):
         """
@@ -76,9 +80,45 @@ class PortalController:
                 # return without doing anything.
                 return
         new_hwnd = candidate_hwnd
-        elem = pywinauto.findwindows.find_element(handle=new_hwnd)
-        HwndWrapper(elem).set_focus()
+        window_activate(new_hwnd)
 
+
+def window_activate(hwnd):
+    """
+    Set focus to hwnd. This is the Microsoft Magic Focus Dance.
+
+    Function adapted from the petronia project by groboclown on GitHub:
+    https://github.com/groboclown/petronia/blob/master/src/petronia/arch/funcs_any_win.py#L529
+    Credit for inventing the phrase "Microsoft Magic Focus dance" also goes to
+    groboclown.
+    """
+    current_hwnd = windll.user32.GetForegroundWindow()
+    current_thread_id = windll.kernel32.GetCurrentThreadId()
+    thread_process_id = windll.user32.GetWindowThreadProcessId(current_hwnd, None)
+    if thread_process_id != current_thread_id:
+        res = windll.user32.AttachThreadInput(thread_process_id,
+                                              current_thread_id, True)
+        # ERROR_INVALID_PARAMETER means that the two threads are already
+        # attached.
+        if res == 0 and GetLastError() != ERROR_INVALID_PARAMETER:
+            # TODO better logging
+            print('WARN: could not attach thread input to thread '
+                  '{0} ({1})'.format(thread_process_id, GetLastError()))
+            return True
+    flags = SWP_NOSIZE | SWP_NOMOVE
+    res = windll.user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags)
+    if res == 0:
+        return False
+    # At this point, the window hwnd is valid, so we don't need to fail out if
+    # the results are non-zero.  Some of these will not succeed due to
+    # attributes of the window, rather than the window not existing.
+    flags = SWP_NOSIZE | SWP_NOMOVE
+    windll.user32.SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, flags)
+    windll.user32.AttachThreadInput(thread_process_id, current_thread_id, False)
+    windll.user32.SetForegroundWindow(hwnd)
+    windll.user32.SetFocus(hwnd)
+    windll.user32.SetActiveWindow(hwnd)
+    return True
 
 def hwnd_is_valid(candidate_hwnd, active_hwnd):
     return (not hwnd_is_desktop(candidate_hwnd)) and \
