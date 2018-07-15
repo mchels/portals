@@ -1,9 +1,9 @@
 # Functionality
-An Autohotkey script listen for keystrokes and forwards them to Python via a NamedPipe which takes a window management action. Currently actions include snapping windows and moving focus.
+An Autohotkey script listens for keystrokes and forwards them to Python via a NamedPipe which takes a window management action. Currently, actions include snapping windows and moving focus.
 
 
 # Known issues
-- When moving focus between two cmd.exe windows the move_focus command must be run twice to take effect.
+- When moving focus between two cmd.exe windows the `move_focus` command must be run twice to take effect.
 
 
 # Background
