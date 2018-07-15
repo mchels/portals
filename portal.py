@@ -50,30 +50,22 @@ class PortalController:
                 return portal
         raise RuntimeError('No active portal found. This should never happen.')
 
-    def get_adjacent_portal(self, drc, portal=None):
-        active_portal = self.get_active_portal() if portal is None else portal
-        new_idx = (active_portal.idx+drc) % len(self.portals)
+    def get_adjacent_portal(self, drc, portal):
+        new_idx = (portal.idx+drc) % len(self.portals)
         return self.portals[new_idx]
-
-    def snap_hwnd_to_portal(self, hwnd=None, portal=None):
-        portal = self.get_active_portal() if portal is None else portal
-        hwnd = win32gui.GetForegroundWindow() if hwnd is None else hwnd
-        win32gui.SetWindowPos(hwnd, HWND_TOPMOST, portal.left, portal.top,
-                              portal.width, portal.height, SWP_NOZORDER)
 
     def snap_active_in_drc(self, drc):
         """ drc: +1 (right) or -1 (left) """
         hwnd = win32gui.GetForegroundWindow()
+        cur_portal = self.get_active_portal()
         if is_maximized(hwnd):
-            cur_portal = self.get_active_portal()
             new_portal = self.get_next_portal_on_monitor(cur_portal, drc)
             win32gui.ShowWindow(hwnd, SW_RESTORE)
-        elif not self.hwnd_is_snapped_to_portal():
-            # self.snap_hwnd_to_portal()
+        elif not hwnd_is_snapped_to_portal(hwnd, cur_portal):
             new_portal = self.get_active_portal()
         else:
-            new_portal = self.get_adjacent_portal(drc)
-        self.snap_hwnd_to_portal(portal=new_portal)
+            new_portal = self.get_adjacent_portal(drc, cur_portal)
+        snap_hwnd_to_portal(hwnd, new_portal)
 
     def get_next_portal_on_monitor(self, portal, drc):
         """
@@ -84,21 +76,6 @@ class PortalController:
         if candidate_portal.mon_idx == portal.mon_idx:
             return candidate_portal
         return portal
-
-    def hwnd_is_snapped_to_portal(self, hwnd=None, portal=None):
-        portal = self.get_active_portal() if portal is None else portal
-        hwnd = win32gui.GetForegroundWindow() if hwnd is None else hwnd
-        rect = win32gui.GetWindowRect(hwnd)
-        left = rect[0]
-        top = rect[1]
-        right = rect[2]
-        bottom = rect[3]
-        if ((portal.left == left) and (portal.top == top) and
-            (portal.right == right) and (portal.bottom == bottom)):
-            print(True)
-            return True
-        print(False)
-        return False
 
     def move_focus_in_drc(self, drc):
         active_portal = self.get_active_portal()
@@ -116,6 +93,17 @@ class PortalController:
         new_hwnd = candidate_hwnd
         window_activate(new_hwnd)
 
+
+def snap_hwnd_to_portal(hwnd, portal):
+    win32gui.SetWindowPos(hwnd, HWND_TOPMOST, portal.left, portal.top,
+                          portal.width, portal.height, SWP_NOZORDER)
+
+def hwnd_is_snapped_to_portal(hwnd, portal):
+    left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+    if ((portal.left == left) and (portal.top == top) and
+        (portal.right == right) and (portal.bottom == bottom)):
+        return True
+    return False
 
 def window_activate(hwnd):
     """
