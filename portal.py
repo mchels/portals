@@ -42,12 +42,14 @@ class PortalController:
     def __init__(self, n_splits):
         self.portals = make_portals(n_splits)
 
-    def get_active_portal(self):
-        p_com = get_hwnd_com()
-        for portal in self.portals:
-            if point_in_portal(p_com, portal):
-                return portal
-        raise RuntimeError('No active portal found. This should never happen.')
+    def get_closest_portal(self):
+        """
+        Only take horizontal direction into account since we don't support managing windows in the y direction yet.
+        """
+        hwnd_x_com, _ = get_hwnd_com()
+        dists = [abs(hwnd_x_com-(p.left+p.width/2)) for p in self.portals]
+        idx_min = dists.index(min(dists))
+        return self.portals[idx_min]
 
     def get_adjacent_portal(self, drc, portal):
         new_idx = (portal.idx+drc) % len(self.portals)
@@ -56,12 +58,12 @@ class PortalController:
     def snap_active_in_drc(self, drc):
         """ drc: +1 (right) or -1 (left) """
         hwnd = win32gui.GetForegroundWindow()
-        cur_portal = self.get_active_portal()
+        cur_portal = self.get_closest_portal()
         if is_maximized(hwnd):
             new_portal = self.get_next_portal_on_monitor(cur_portal, drc)
             win32gui.ShowWindow(hwnd, SW_RESTORE)
         elif not hwnd_is_snapped_to_portal(hwnd, cur_portal):
-            new_portal = self.get_active_portal()
+            new_portal = cur_portal
         else:
             new_portal = self.get_adjacent_portal(drc, cur_portal)
         snap_hwnd_to_portal(hwnd, new_portal)
@@ -77,7 +79,7 @@ class PortalController:
         return portal
 
     def move_focus_in_drc(self, drc):
-        active_portal = self.get_active_portal()
+        active_portal = self.get_closest_portal()
         active_hwnd = active_portal.get_hwnd_at_com()
         candidate_portal = active_portal
         candidate_is_valid = False
