@@ -3,7 +3,7 @@ An Autohotkey script listens for keystrokes and forwards them to Python via a Na
 
 
 # Known issues
-- When moving focus between two cmd.exe windows the `move_focus` command must be run twice to take effect.
+- The following has been worked around by inserting a short waiting time (75ms): When moving focus between two cmd.exe windows the `move_focus` command must be run twice to take effect.
 
 
 # Background

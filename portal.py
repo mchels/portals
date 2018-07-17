@@ -1,5 +1,6 @@
 from ctypes import windll
 from ctypes import GetLastError
+import time
 
 import win32api
 import win32gui
@@ -118,14 +119,15 @@ def window_activate(hwnd):
     current_thread_id = windll.kernel32.GetCurrentThreadId()
     thread_process_id = windll.user32.GetWindowThreadProcessId(current_hwnd, None)
     if thread_process_id != current_thread_id:
-        res = windll.user32.AttachThreadInput(thread_process_id,
-                                              current_thread_id, True)
+        res = windll.user32.AttachThreadInput(thread_process_id, current_thread_id, True)
+        time.sleep(0.075)
         # ERROR_INVALID_PARAMETER means that the two threads are already
         # attached.
-        if res == 0 and GetLastError() != ERROR_INVALID_PARAMETER:
+        err = GetLastError()
+        if (res == 0) and (err != ERROR_INVALID_PARAMETER):
             # TODO better logging
             print('WARN: could not attach thread input to thread '
-                  '{0} ({1})'.format(thread_process_id, GetLastError()))
+                  '{0} ({1})'.format(thread_process_id, err))
             return True
     flags = SWP_NOSIZE | SWP_NOMOVE
     res = windll.user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags)
