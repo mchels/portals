@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import traceback
 
 import win32file
 
@@ -63,8 +64,7 @@ class PCListener(NamedPipeListener):
         try:
             method(*args)
         except TypeError:
-            logging.warning(f'Arguments {args} are inconsistent with the '
-                            f'signature of method {method}.')
+            print(traceback.format_exc())
             return
 
     def exit(self):
