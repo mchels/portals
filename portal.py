@@ -134,7 +134,6 @@ def window_activate(hwnd):
     # At this point, the window hwnd is valid, so we don't need to fail out if
     # the results are non-zero.  Some of these will not succeed due to
     # attributes of the window, rather than the window not existing.
-    flags = SWP_NOSIZE | SWP_NOMOVE
     windll.user32.SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, flags)
     windll.user32.AttachThreadInput(thread_process_id, current_thread_id, False)
     windll.user32.SetForegroundWindow(hwnd)
