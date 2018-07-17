@@ -59,11 +59,10 @@ class PortalController:
         """ drc: +1 (right) or -1 (left) """
         hwnd = win32gui.GetForegroundWindow()
         cur_portal = self.get_closest_portal()
-        if is_maximized(hwnd):
+        if not hwnd_is_snapped_to_portal(hwnd, cur_portal):
+            if is_maximized(hwnd):
+                win32gui.ShowWindow(hwnd, SW_RESTORE)
             new_portal = self.get_next_portal_on_monitor(cur_portal, drc)
-            win32gui.ShowWindow(hwnd, SW_RESTORE)
-        elif not hwnd_is_snapped_to_portal(hwnd, cur_portal):
-            new_portal = cur_portal
         else:
             new_portal = self.get_adjacent_portal(drc, cur_portal)
         snap_hwnd_to_portal(hwnd, new_portal)
