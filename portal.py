@@ -115,6 +115,9 @@ def window_activate(hwnd):
     https://github.com/groboclown/petronia/blob/master/src/petronia/arch/funcs_any_win.py#L529
     Credit for inventing the phrase "Microsoft Magic Focus dance" also goes to
     groboclown.
+
+    Another implementation that may be superior:
+    https://stackoverflow.com/questions/17879890/understanding-attachthreadinput-detaching-lose-focus
     """
     current_hwnd = windll.user32.GetForegroundWindow()
     current_thread_id = windll.kernel32.GetCurrentThreadId()
