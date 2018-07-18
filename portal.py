@@ -73,7 +73,8 @@ class PortalController:
         Gets the portal adjacent to `portal` in direction `drc` but only if
         they are on the same monitor. Otherwise `portal` is returned.
         """
-        candidate_portal = self.portals[portal.idx+drc]
+        next_idx = (portal.idx+drc) % len(self.portals)
+        candidate_portal = self.portals[next_idx]
         if candidate_portal.mon_idx == portal.mon_idx:
             return candidate_portal
         return portal
