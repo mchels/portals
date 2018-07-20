@@ -55,7 +55,12 @@ class PCListener(NamedPipeListener):
     def process_msg(self, msg_raw):
         # Autohotkey sends strings encoded as utf-16 little endian.
         msg = msg_raw.decode('utf-16le')
-        msg_dict = json.loads(msg)
+        try:
+            msg_dict = json.loads(msg)
+        except json.decoder.JSONDecodeError:
+            print(traceback.format_exc())
+            print(msg)
+            return
         try:
             method, args = utils.parse_method_and_args(self, msg_dict)
         except AttributeError:
@@ -71,3 +76,11 @@ class PCListener(NamedPipeListener):
         if self.ahk_process:
             self.ahk_process.kill()
         sys.exit()
+
+    def show(self, msg):
+        print(msg)
+        handle = int(msg, 16)
+        print(handle)
+        import win32gui
+        print(win32gui.GetClassName(handle))
+        print(win32gui.GetWindowText(handle))

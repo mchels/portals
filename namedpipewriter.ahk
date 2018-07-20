@@ -1,4 +1,7 @@
-﻿Menu, Tray, Icon, shell32.dll, 19
+﻿#SingleInstance force
+#Persistent
+Menu, Tray, Icon, shell32.dll, 19
+Gui +LastFound ; Required for hWnd := WinExist() below.
 
 PIPE_ACCESS_OUTBOUND := 2
 PIPE_NOWAIT := 1
@@ -15,6 +18,7 @@ nInBufferSize := 4096
 nDefaultTimeOut := 300
 lpSecurityAttributes := 0
 lpOverlapped := 0
+HSHELL_WINDOWCREATED := 1
 
 pipe := DllCall("CreateNamedPipe"
     , "str", pipe_name
@@ -27,23 +31,19 @@ pipe := DllCall("CreateNamedPipe"
     , ptr, lpSecurityAttributes)
 DllCall("ConnectNamedPipe", ptr, pipe, ptr, lpOverlapped)
 
-WriteToPipe(msg) {
-    global pipe
-    global char_size
-    global ptr
-    global lpOverlapped
-    lpNumberOfBytesWritten := 0
-    errcode := DllCall("WriteFile"
-        , ptr, pipe
-        , "str", msg
-        , "uint", StrLen(msg)*char_size
-        , "uint*", lpNumberOfBytesWritten
-        , ptr, lpOverlapped)
-    If !errcode {
-        MsgBox WriteFile failed: %ErrorLevel%/%A_LastError%
-    }
-}
+; https://autohotkey.com/board/topic/80644-how-to-hook-on-to-shell-to-receive-its-messages/
+hWnd := WinExist()
+DllCall("RegisterShellHookWindow", UInt, hWnd)
+MsgNum := DllCall("RegisterWindowMessage", Str, "SHELLHOOK")
+OnMessage(MsgNum, "CallbackFunction")
 
+
+Return ; Auto-execute section ends here: https://autohotkey.com/docs/Scripts.htm#auto
+
+
+
+; Hotkey definitions
+; ==============================================================================
 #left::
     msg := "{""pc"": {""snap_active_in_drc"": [-1]}}"
     WriteToPipe(msg)
@@ -68,3 +68,33 @@ WriteToPipe(msg) {
     msg := "{""exit"": []}"
     WriteToPipe(msg)
     return
+
+
+
+; Function definitions. These do not have to be in the auto-execute section.
+; ==============================================================================
+CallbackFunction(wParam, lParam) {
+    global HSHELL_WINDOWCREATED
+	If (wParam = HSHELL_WINDOWCREATED) {
+        WinGet, hWnd,, A
+        msg := "{""show"": [""" . hWnd .  """]}"
+        WriteToPipe(msg)
+    }
+}
+
+WriteToPipe(msg) {
+    global pipe
+    global char_size
+    global ptr
+    global lpOverlapped
+    lpNumberOfBytesWritten := 0
+    errcode := DllCall("WriteFile"
+        , ptr, pipe
+        , "str", msg
+        , "uint", StrLen(msg)*char_size
+        , "uint*", lpNumberOfBytesWritten
+        , ptr, lpOverlapped)
+    If !errcode {
+        MsgBox WriteFile failed: %ErrorLevel%/%A_LastError%
+    }
+}
