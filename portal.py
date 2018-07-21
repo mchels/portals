@@ -18,12 +18,13 @@ SW_RESTORE = 9
 
 
 class Portal:
-    def __init__(self, left, top, width, height, mon_idx, idx=None):
+    def __init__(self, left, top, width, height, mon_idx, local_idx, idx):
         self.left = left
         self.top = top
         self.width = width
         self.height = height
         self.mon_idx = mon_idx
+        self.local_idx = local_idx
         self.idx = idx
         self.right = left + width
         self.bottom = top + height
@@ -42,6 +43,7 @@ class Portal:
 class PortalController:
     def __init__(self, n_splits):
         self.portals = make_portals(n_splits)
+        self.set_main_mon_idx()
 
     def get_closest_portal(self):
         """
@@ -95,6 +97,24 @@ class PortalController:
         new_hwnd = candidate_hwnd
         window_activate(new_hwnd)
 
+    def set_main_mon_idx(self):
+        mons = win32api.EnumDisplayMonitors()
+        mon_infos = [win32api.GetMonitorInfo(mon[0]) for mon in mons]
+        def_mon_info = mon_infos[0]
+        mon_infos.sort(key=lambda info: info['Work'][0])
+        self.mon_idx_def = mon_infos.index(def_mon_info)
+
+    def snap_hwnd_to_portal_at_idx(self, hwnd='active', mon_idx=0, portal_idx=0):
+        if hwnd == 'active':
+            hwnd = win32gui.GetForegroundWindow()
+        portal = self.get_portal_at_idx(mon_idx, portal_idx)
+        snap_hwnd_to_portal(hwnd, portal)
+
+    def get_portal_at_idx(self, mon_idx, portal_idx):
+        for portal in self.portals:
+            if (portal.local_idx == portal_idx) and (portal.mon_idx == mon_idx):
+                return portal
+        raise ValueError('Portal not found')
 
 def snap_hwnd_to_portal(hwnd, portal):
     win32gui.SetWindowPos(hwnd, HWND_TOPMOST, portal.left, portal.top,
@@ -194,9 +214,9 @@ def make_portals_in_monitor(n_split, mon_info, mon_idx):
     portal_width = int(mon_width / n_split)
     portal_height = mon_height
     portals = []
-    for j in range(n_split):
-        left = int(mon_left + j*portal_width)
-        portal = Portal(left, mon_top, portal_width, portal_height, mon_idx)
+    for local_idx in range(n_split):
+        left = int(mon_left + local_idx*portal_width)
+        portal = Portal(left, mon_top, portal_width, portal_height, mon_idx, local_idx, idx=None)
         portals.append(portal)
     return portals
 

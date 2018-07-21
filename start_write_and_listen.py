@@ -9,13 +9,16 @@ from portal import PortalController
 import utils
 
 
-logging.basicConfig(level=logging.WARNING)
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--ahk_exe_path', dest='ahk_exe_path', required=True,
                     help='Full path to Autohotkey executable.',
                     type=lambda path: utils.get_proper_path(parser, path))
+parser.add_argument('--debug', action='store_true', default=False)
 args = parser.parse_args()
+
+if args.debug:
+    logging.getLogger().setLevel(logging.DEBUG)
+
 pipename = r'\\.\pipe\ahk_py_pipe'
 dir_this_file = Path(__file__).resolve().parent
 ahk_script_path = dir_this_file / 'namedpipewriter.ahk'

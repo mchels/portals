@@ -77,7 +77,7 @@ CallbackFunction(wParam, lParam) {
     global HSHELL_WINDOWCREATED
 	If (wParam = HSHELL_WINDOWCREATED) {
         WinGet, hWnd,, A
-        msg := "{""show"": [""" . hWnd .  """]}"
+        msg := "{""snap_created_window"": [""" . hWnd .  """]}"
         WriteToPipe(msg)
     }
 }
