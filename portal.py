@@ -107,6 +107,7 @@ class PortalController:
     def snap_hwnd_to_portal_at_idx(self, hwnd='active', mon_idx=0, portal_idx=0):
         if hwnd == 'active':
             hwnd = win32gui.GetForegroundWindow()
+        win32gui.ShowWindow(hwnd, SW_RESTORE)
         portal = self.get_portal_at_idx(mon_idx, portal_idx)
         snap_hwnd_to_portal(hwnd, portal)
 
