@@ -17,7 +17,14 @@ parser.add_argument('--debug', action='store_true', default=False)
 args = parser.parse_args()
 
 if args.debug:
+    logger = logging.getLogger()
+    log_file_path = Path('~').expanduser() / 'portals.log'
+    handler = logging.FileHandler(log_file_path)
+    logger.addHandler(handler)
     logging.getLogger().setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
 
 pipename = r'\\.\pipe\ahk_py_pipe'
 dir_this_file = Path(__file__).resolve().parent

@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import time
 import traceback
 
 import pywintypes
@@ -99,6 +100,7 @@ class PCListener(NamedPipeListener):
         win_texts = ('Firefox', 'notepad', 'Double Commander')
         class_names = ('CabinetWClass', 'FM', 'NotebookFrame')
         if any(x in win_text for x in win_texts) or any(x in class_name for x in class_names):
+            time.sleep(0.05) # Otherwise Firefox sometimes doesn't snap properly.
             portal_idx = 1
         if ('MozillaWindowClass' in class_name) and ('Write' in win_text):
             portal_idx = 1
@@ -111,6 +113,6 @@ class PCListener(NamedPipeListener):
             except pywintypes.error:
                 print(traceback.format_exc())
             logging.debug(f'Snapping window {class_name}, {win_text} '
-                        f'to monitor {mon_idx}, idx {portal_idx}')
+                          f'to monitor {mon_idx}, idx {portal_idx}')
         if 'SpotifyMainWindow' in class_name:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
