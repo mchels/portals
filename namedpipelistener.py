@@ -86,7 +86,10 @@ class PCListener(NamedPipeListener):
 
     def snap_created_window(self, hwnd_hex):
         """ hwnd_hex is a hexadecimal string """
-        hwnd = int(hwnd_hex, 16)
+        try:
+            hwnd = int(hwnd_hex, 16)
+        except ValueError:
+            return
         class_name = win32gui.GetClassName(hwnd)
         win_text = win32gui.GetWindowText(hwnd)
         logging.debug('class_name %s', class_name)
