@@ -12,6 +12,10 @@ import win32gui
 import utils
 
 
+TMAX = 0.3
+TDELTA = 0.05
+
+
 class NamedPipeListener:
     def __init__(self, pipename, n_bytes_to_read=4096):
         self.pipename = pipename
@@ -103,7 +107,6 @@ class PCListener(NamedPipeListener):
         win_texts = ('Firefox', 'notepad', 'Double Commander')
         class_names = ('CabinetWClass', 'FM', 'NotebookFrame')
         if any(x in win_text for x in win_texts) or any(x in class_name for x in class_names):
-            time.sleep(0.05) # Otherwise Firefox sometimes doesn't snap properly.
             portal_idx = 1
         if ('MozillaWindowClass' in class_name) and ('Write' in win_text):
             portal_idx = 1
@@ -112,7 +115,15 @@ class PCListener(NamedPipeListener):
                 # It feels more right to snap the `hwnd` window, but when we
                 # open, e.g., a new Firefox window from Firefox itself, using
                 # `hwnd` snaps the ORIGINAL firefox window, not the new one!
-                self.pc.snap_hwnd_to_portal_at_idx('active', mon_idx, portal_idx)
+                t = 0
+                while t < TMAX:
+                    foo = win32gui.GetForegroundWindow()
+                    print(foo)
+                    if hwnd == foo:
+                        self.pc.snap_hwnd_to_portal_at_idx(hwnd, mon_idx, portal_idx)
+                    time.sleep(TDELTA)
+                    t += TDELTA
+                return
             except pywintypes.error:
                 print(traceback.format_exc())
             logging.debug(f'Snapping window {class_name}, {win_text} '
