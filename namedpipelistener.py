@@ -104,10 +104,15 @@ class PCListener(NamedPipeListener):
         portal_idx = None
         if any(x in win_text for x in win_texts) or any(x in class_name for x in class_names):
             portal_idx = 0
-        win_texts = ('Firefox', 'notepad', 'Double Commander')
+        win_texts = ('notepad', 'Double Commander')
         class_names = ('CabinetWClass', 'FM', 'NotebookFrame')
         if any(x in win_text for x in win_texts) or any(x in class_name for x in class_names):
             portal_idx = 1
+        if 'Firefox' in win_text:
+            portal_idx = 1
+            time.sleep(0.15)
+            self.pc.snap_hwnd_to_portal_at_idx('active', mon_idx, portal_idx)
+            return
         if ('MozillaWindowClass' in class_name) and ('Write' in win_text):
             portal_idx = 1
         if portal_idx is not None:
