@@ -1,3 +1,4 @@
+from collections import namedtuple
 import json
 import logging
 import sys
@@ -88,50 +89,58 @@ class PCListener(NamedPipeListener):
     def show(self, msg):
         print(msg)
 
-    def snap_created_window(self, hwnd_hex):
-        """ hwnd_hex is a hexadecimal string """
-        try:
-            hwnd = int(hwnd_hex, 16)
-        except ValueError:
-            return
-        class_name = win32gui.GetClassName(hwnd)
-        win_text = win32gui.GetWindowText(hwnd)
-        logging.debug('class_name %s', class_name)
-        logging.debug('win_text %s', win_text)
-        win_texts = ('Chrome', 'Command Prompt', 'CPUID HWMonitor', 'KeePassX')
-        class_names = ('SUMATRA_PDF_FRAME', 'ConsoleWindowClass')
-        mon_idx = self.pc.mon_idx_def
-        portal_idx = None
-        if any(x in win_text for x in win_texts) or any(x in class_name for x in class_names):
-            portal_idx = 0
-        win_texts = ('notepad', 'Double Commander')
-        class_names = ('CabinetWClass', 'FM', 'NotebookFrame')
-        if any(x in win_text for x in win_texts) or any(x in class_name for x in class_names):
-            portal_idx = 1
-        if 'Firefox' in win_text:
-            portal_idx = 1
-            time.sleep(0.15)
-            self.pc.snap_hwnd_to_portal_at_idx('active', mon_idx, portal_idx)
-            return
-        if ('MozillaWindowClass' in class_name) and ('Write' in win_text):
-            portal_idx = 1
-        if portal_idx is not None:
+    def snap_created_window(self, hwnd):
+        if isinstance(hwnd, str):
             try:
-                # It feels more right to snap the `hwnd` window, but when we
-                # open, e.g., a new Firefox window from Firefox itself, using
-                # `hwnd` snaps the ORIGINAL firefox window, not the new one!
-                t = 0
-                while t < TMAX:
-                    foo = win32gui.GetForegroundWindow()
-                    print(foo)
-                    if hwnd == foo:
-                        self.pc.snap_hwnd_to_portal_at_idx(hwnd, mon_idx, portal_idx)
-                    time.sleep(TDELTA)
-                    t += TDELTA
+                hwnd = int(hwnd, 16)
+            except ValueError:
                 return
-            except pywintypes.error:
-                print(traceback.format_exc())
-            logging.debug(f'Snapping window {class_name}, {win_text} '
-                          f'to monitor {mon_idx}, idx {portal_idx}')
+        win_text = win32gui.GetWindowText(hwnd)
+        class_name = win32gui.GetClassName(hwnd)
+        logging.debug('win_text %s', win_text)
+        logging.debug('class_name %s', class_name)
+        # Special cases.
+        if 'Firefox' in win_text:
+            time.sleep(0.15)
+            self.pc.snap_hwnd_to_portal_at_idx('active', self.pc.mon_idx_def, 1)
+            return
         if 'SpotifyMainWindow' in class_name:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+            return
+        # General cases.
+        attributes = ('win_text', 'class_name', 'mon_idx', 'portal_idx')
+        Hwndmatcher = namedtuple('Hwndmatcher', attributes)
+        hwndmatchers = [
+            Hwndmatcher('Chrome', '', self.pc.mon_idx_def, 0),
+            Hwndmatcher('Command Prompt', '', self.pc.mon_idx_def, 0),
+            Hwndmatcher('CPUID HWMonitor', '', self.pc.mon_idx_def, 0),
+            Hwndmatcher('KeePassX', '', self.pc.mon_idx_def, 0),
+            Hwndmatcher('', 'SUMATRA_PDF_FRAME', self.pc.mon_idx_def, 0),
+            Hwndmatcher('', 'ConsoleWindowClass', self.pc.mon_idx_def, 0),
+            Hwndmatcher('notepad', '', self.pc.mon_idx_def, 1),
+            Hwndmatcher('Double Commander', '', self.pc.mon_idx_def, 1),
+            # Visual Studio Code only works for the first window.
+            Hwndmatcher('Visual Studio Code', '', self.pc.mon_idx_def, 1),
+            Hwndmatcher('Write', 'MozillaWindowClass', self.pc.mon_idx_def, 1),
+        ]
+        for matcher in hwndmatchers:
+            if (matcher.win_text in win_text) and (matcher.class_name in class_name):
+                break
+        else:
+            logging.debug('No match found. No snapping will be executed.')
+            return
+        logging.debug(f'Snapping window {win_text}, {class_name} '
+                      f'to monitor {matcher.mon_idx}, idx {matcher.portal_idx}')
+        t = 0
+        while t < TMAX:
+            hwnd_foreground = win32gui.GetForegroundWindow()
+            logging.debug(hwnd_foreground)
+            if hwnd == hwnd_foreground:
+                try:
+                    self.pc.snap_hwnd_to_portal_at_idx(hwnd, matcher.mon_idx,
+                                                       matcher.portal_idx)
+                except pywintypes.error:
+                    print(traceback.format_exc())
+            time.sleep(TDELTA)
+            t += TDELTA
+        return
