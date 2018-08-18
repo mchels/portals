@@ -54,6 +54,11 @@ Return ; Auto-execute section ends here: https://autohotkey.com/docs/Scripts.htm
     WriteToPipe(msg)
     return
 
+#up::
+    msg := "{""pc"": {""maximize_active"": []}}"
+    WriteToPipe(msg)
+    return
+
 +#left::
     msg := "{""pc"": {""move_focus_in_drc"": [-1]}}"
     WriteToPipe(msg)

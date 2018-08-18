@@ -3,6 +3,7 @@ from ctypes import GetLastError
 import time
 
 import win32api
+import win32con
 import win32gui
 
 
@@ -116,6 +117,10 @@ class PortalController:
             if (portal.local_idx == portal_idx) and (portal.mon_idx == mon_idx):
                 return portal
         raise ValueError('Portal not found')
+
+    def maximize_active(self):
+        hwnd = win32gui.GetForegroundWindow()
+        win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
 
 def snap_hwnd_to_portal(hwnd, portal):
     win32gui.SetWindowPos(hwnd, HWND_TOPMOST, portal.left, portal.top,
