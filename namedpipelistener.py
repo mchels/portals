@@ -1,11 +1,14 @@
 from collections import namedtuple
 import json
 import logging
+from pathlib import Path
+import subprocess
 import sys
 import time
 import traceback
 
 import pywintypes
+import pyperclip
 import win32con
 import win32file
 import win32gui
@@ -144,3 +147,44 @@ class PCListener(NamedPipeListener):
             time.sleep(TDELTA)
             t += TDELTA
         return
+
+    @staticmethod
+    def convert_clipboard_path():
+        """
+        Manual tests:
+        - Try to convert a valid Windows path. You should get the corresponding wslpath.
+        - Try to convert an invalid Windows path. You should get an error.
+        - Try to convert a binary file (exe, png, etc.). You should get an error.
+        - Try to convert a wslpath. You should get an error.
+        """
+        clip_content = pyperclip.paste()
+        clip_content_len = len(clip_content)
+        clip_content_len_limit = 1e3
+        if clip_content_len > clip_content_len_limit:
+            logging.debug(f'Got clip_content with len {clip_content_len} which '
+                          f'is above the limit of {clip_content_len_limit}. '
+                          'Aborting.')
+            return
+        if not clip_content:
+            logging.debug('Got clip_content with zero length. Aborting.')
+            return
+        clip_content_stripped = clip_content.strip('"')
+        try:
+            path_exists = Path(clip_content_stripped).exists()
+        except OSError:
+            path_exists = False
+        if not path_exists:
+            logging.debug(f'Clipboard content with lenth {clip_content_len} '
+                          'is not a valid path. Aborting.')
+            return
+        new_clip_content = get_wslpath(clip_content_stripped)
+        logging.debug(f'Converted clipboard content {clip_content} into '
+                      f'{new_clip_content}.')
+        pyperclip.copy(new_clip_content)
+
+
+def get_wslpath(win_path):
+    bash_cmd = f"wslpath '{win_path}'"
+    cmd = ["bash", "-c", bash_cmd]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE)
+    return result.stdout.decode('unicode_escape').strip()
