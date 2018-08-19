@@ -86,8 +86,8 @@ Return ; Auto-execute section ends here: https://autohotkey.com/docs/Scripts.htm
 CallbackFunction(wParam, lParam) {
     global HSHELL_WINDOWCREATED
 	If (wParam = HSHELL_WINDOWCREATED) {
-        WinGet, hWnd,, A
-        msg := "{""snap_created_window"": [""" . hWnd .  """]}"
+        new_hwnd := lParam
+        msg := "{""snap_created_window"": [""" . new_hwnd .  """]}"
         WriteToPipe(msg)
     }
 }

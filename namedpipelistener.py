@@ -7,8 +7,8 @@ import sys
 import time
 import traceback
 
-import pywintypes
 import pyperclip
+import pywintypes
 import win32con
 import win32file
 import win32gui
@@ -16,7 +16,7 @@ import win32gui
 import utils
 
 
-TMAX = 0.3
+TMAX = 1.0
 TDELTA = 0.05
 
 
@@ -93,38 +93,65 @@ class PCListener(NamedPipeListener):
         print(msg)
 
     def snap_created_window(self, hwnd):
+        """
+        Manual tests:
+        - 1) Open a maximized Firefox window. 2) Open Slack. 3) When Slack icon
+          appears, switch focus to Firefox. 4) When Slack window opens Firefox
+          should NOT be snapped. Slack also should not be snapped.
+        - 1) Open a maximized Firefox window. 2) Close it. 3) Open Firefox. The
+          new Firefox window should snap. The same should work for the "Write
+          Message" window in Thunderbird.
+        - Open Thunderbird. The main window should NOT be snapped.
+        """
         if isinstance(hwnd, str):
             try:
-                hwnd = int(hwnd, 16)
+                hwnd = int(hwnd)
             except ValueError:
+                logging.debug(f'Could not parse hwnd "{hwnd}".')
                 return
-        win_text = win32gui.GetWindowText(hwnd)
-        class_name = win32gui.GetClassName(hwnd)
+        t = 0
+        while t < TMAX:
+            try:
+                win_text = win32gui.GetWindowText(hwnd)
+                class_name = win32gui.GetClassName(hwnd)
+                break
+            except TypeError:
+                t += TDELTA
+                logging.debug('Failed to get win_text and class_name. Total '
+                              f'waiting time is now {t} seconds. Retrying in '
+                              f'{TDELTA} seconds.')
+                time.sleep(TDELTA)
+        else:
+            logging.debug(f'Failed to get win_text and class_name for hwnd '
+                          f'"{hwnd}" within allowed time of {TMAX}. Aborting')
+            return
         logging.debug('win_text %s', win_text)
         logging.debug('class_name %s', class_name)
         # Special cases.
-        if 'Firefox' in win_text:
-            time.sleep(0.15)
-            self.pc.snap_hwnd_to_portal_at_idx('active', self.pc.mon_idx_def, 1)
-            return
         if 'SpotifyMainWindow' in class_name:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+            logging.debug('Maximizing Spotify.')
             return
         # General cases.
         attributes = ('win_text', 'class_name', 'mon_idx', 'portal_idx')
         Hwndmatcher = namedtuple('Hwndmatcher', attributes)
+        mon_idx_def = self.pc.mon_idx_def
         hwndmatchers = [
-            Hwndmatcher('Chrome', '', self.pc.mon_idx_def, 0),
-            Hwndmatcher('Command Prompt', '', self.pc.mon_idx_def, 0),
-            Hwndmatcher('CPUID HWMonitor', '', self.pc.mon_idx_def, 0),
-            Hwndmatcher('KeePassX', '', self.pc.mon_idx_def, 0),
-            Hwndmatcher('', 'SUMATRA_PDF_FRAME', self.pc.mon_idx_def, 0),
-            Hwndmatcher('', 'ConsoleWindowClass', self.pc.mon_idx_def, 0),
-            Hwndmatcher('notepad', '', self.pc.mon_idx_def, 1),
-            Hwndmatcher('Double Commander', '', self.pc.mon_idx_def, 1),
-            # Visual Studio Code only works for the first window.
-            Hwndmatcher('Visual Studio Code', '', self.pc.mon_idx_def, 1),
-            Hwndmatcher('Write', 'MozillaWindowClass', self.pc.mon_idx_def, 1),
+            Hwndmatcher('Chrome', '', mon_idx_def, 0),
+            # The following two matchers are for cmd.exe. The latter
+            # (ConsoleWindowClass) may be sufficient.
+            Hwndmatcher('Command Prompt', '', mon_idx_def, 0),
+            Hwndmatcher('', 'ConsoleWindowClass', mon_idx_def, 0),
+            # CPUID HWMonitor is known to not work.
+            Hwndmatcher('CPUID HWMonitor', '', mon_idx_def, 0),
+            Hwndmatcher('KeePassX', '', mon_idx_def, 0),
+            Hwndmatcher('Firefox', 'MozillaWindowClass', mon_idx_def, 1),
+            # For Thunderbird's "Write Message" window.
+            Hwndmatcher('Write', 'MozillaWindowClass', mon_idx_def, 1),
+            Hwndmatcher('', 'SUMATRA_PDF_FRAME', mon_idx_def, 0),
+            Hwndmatcher('notepad', '', mon_idx_def, 1),
+            Hwndmatcher('Double Commander', '', mon_idx_def, 1),
+            Hwndmatcher('Visual Studio Code', '', mon_idx_def, 1),
         ]
         for matcher in hwndmatchers:
             if (matcher.win_text in win_text) and (matcher.class_name in class_name):
@@ -134,18 +161,11 @@ class PCListener(NamedPipeListener):
             return
         logging.debug(f'Snapping window {win_text}, {class_name} '
                       f'to monitor {matcher.mon_idx}, idx {matcher.portal_idx}')
-        t = 0
-        while t < TMAX:
-            hwnd_foreground = win32gui.GetForegroundWindow()
-            logging.debug(hwnd_foreground)
-            if hwnd == hwnd_foreground:
-                try:
-                    self.pc.snap_hwnd_to_portal_at_idx(hwnd, matcher.mon_idx,
-                                                       matcher.portal_idx)
-                except pywintypes.error:
-                    print(traceback.format_exc())
-            time.sleep(TDELTA)
-            t += TDELTA
+        try:
+            time.sleep(0.1)
+            self.pc.snap_hwnd_to_portal_at_idx(hwnd, matcher.mon_idx, matcher.portal_idx)
+        except pywintypes.error:
+            print(traceback.format_exc())
         return
 
     @staticmethod
