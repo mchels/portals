@@ -1,4 +1,5 @@
 from collections import namedtuple
+import ctypes
 import json
 import logging
 from pathlib import Path
@@ -80,7 +81,7 @@ class PCListener(NamedPipeListener):
             return
         try:
             method(*args)
-        except TypeError:
+        except:
             print(traceback.format_exc())
             return
 
@@ -200,7 +201,11 @@ class PCListener(NamedPipeListener):
         new_clip_content = get_wslpath(clip_content_stripped)
         logging.debug(f'Converted clipboard content {clip_content} into '
                       f'{new_clip_content}.')
-        pyperclip.copy(new_clip_content)
+        try:
+            pyperclip.copy(new_clip_content)
+        except (pyperclip.PyperclipException, ctypes.ArgumentError):
+            logging.debug(f'Copying content\n{new_clip_content}\nto clipboard '
+                          'failed. Maybe WSL has not been instantiated yet.')
 
 
 def get_wslpath(win_path):

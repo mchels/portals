@@ -14,11 +14,23 @@ parser.add_argument('--ahk_exe_path', dest='ahk_exe_path', required=True,
                     help='Full path to Autohotkey executable.',
                     type=lambda path: utils.get_proper_path(parser, path))
 parser.add_argument('--debug', action='store_true', default=False)
+parser.add_argument('--debug_to_file', action='store_true', default=False)
 args = parser.parse_args()
 
 if args.debug:
     logging.getLogger().setLevel(logging.DEBUG)
 
+if args.debug_to_file:
+    logger = logging.getLogger()
+    log_file_path = Path('~').expanduser() / 'portals.log'
+    handler = logging.FileHandler(log_file_path)
+    logger.addHandler(handler)
+    logging.getLogger().setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+# Make sure that WSL is instantiated.
+subprocess.call(['bash', '-c', ':'])
 
 pipename = r'\\.\pipe\ahk_py_pipe'
 dir_this_file = Path(__file__).resolve().parent
