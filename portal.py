@@ -101,9 +101,12 @@ class PortalController:
     def set_main_mon_idx(self):
         mons = win32api.EnumDisplayMonitors()
         mon_infos = [win32api.GetMonitorInfo(mon[0]) for mon in mons]
-        def_mon_info = mon_infos[0]
         mon_infos.sort(key=lambda info: info['Work'][0])
-        self.mon_idx_def = mon_infos.index(def_mon_info)
+        primary_monitors = [mi for mi in mon_infos if mi['Flags'] == 1]
+        n_primary_monitors = len(primary_monitors)
+        if n_primary_monitors != 1:
+            print(f'Found {n_primary_monitors} primary monitors. Expected 1.')
+        self.mon_idx_def = mon_infos.index(primary_monitors[0])
 
     def snap_hwnd_to_portal_at_idx(self, hwnd='active', mon_idx=0, portal_idx=0):
         if hwnd == 'active':
