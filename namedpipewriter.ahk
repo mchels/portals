@@ -69,7 +69,7 @@ Return ; Auto-execute section ends here: https://autohotkey.com/docs/Scripts.htm
     WriteToPipe(msg)
     return
 
-<^>!PgUp::
+RAlt & PgUp::
     msg := "{""convert_clipboard_path"": []}"
     WriteToPipe(msg)
     return

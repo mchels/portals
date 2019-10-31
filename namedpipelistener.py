@@ -150,7 +150,7 @@ class PCListener(NamedPipeListener):
             # For Thunderbird's "Write Message" window.
             Hwndmatcher('Write', 'MozillaWindowClass', mon_idx_def, 1),
             # For Outlook email window.
-            Hwndmatcher('Message (HTML)', 'rctrl_renwnd32', mon_idx_def, 1),
+            Hwndmatcher('Message (HTML)', 'rctrl_renwnd32', mon_idx_def, 0),
             Hwndmatcher('', 'SUMATRA_PDF_FRAME', mon_idx_def, 0),
             Hwndmatcher('notepad', '', mon_idx_def, 1),
             Hwndmatcher('Double Commander', '', mon_idx_def, 1),
