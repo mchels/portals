@@ -49,6 +49,7 @@ class PortalController:
     def get_closest_portal(self):
         """
         Only take horizontal direction into account since we don't support managing windows in the y direction yet.
+        In case of ties this function returns the first occurrence.
         """
         hwnd_x_com, _ = get_hwnd_com()
         dists = [abs(hwnd_x_com-(p.left+p.width/2)) for p in self.portals]
@@ -64,9 +65,10 @@ class PortalController:
         hwnd = win32gui.GetForegroundWindow()
         cur_portal = self.get_closest_portal()
         if not hwnd_is_snapped_to_portal(hwnd, cur_portal):
+            new_portal = self.get_next_portal_on_monitor(cur_portal, drc)
             if is_maximized(hwnd):
                 win32gui.ShowWindow(hwnd, SW_RESTORE)
-            new_portal = self.get_next_portal_on_monitor(cur_portal, drc)
+                new_portal = cur_portal if drc == -1 else self.get_next_portal_on_monitor(cur_portal, drc)
         else:
             new_portal = self.get_adjacent_portal(drc, cur_portal)
         snap_hwnd_to_portal(hwnd, new_portal)
