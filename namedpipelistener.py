@@ -129,9 +129,9 @@ class PCListener(NamedPipeListener):
         logging.debug('win_text %s', win_text)
         logging.debug('class_name %s', class_name)
         # Special cases.
-        if 'SpotifyMainWindow' in class_name:
+        if class_name in ('CASCADIA_HOSTING_WINDOW_CLASS',) or win_text in ('Spotify Premium',):
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-            logging.debug('Maximizing Spotify.')
+            logging.debug('Maximizing window.')
             return
         # General cases.
         attributes = ('win_text', 'class_name', 'mon_idx', 'portal_idx')
@@ -152,7 +152,7 @@ class PCListener(NamedPipeListener):
             # For Outlook email window.
             Hwndmatcher('Message (HTML)', 'rctrl_renwnd32', mon_idx_def, 0),
             Hwndmatcher('', 'SUMATRA_PDF_FRAME', mon_idx_def, 0),
-            Hwndmatcher('notepad', '', mon_idx_def, 1),
+            Hwndmatcher('Notepad', '', mon_idx_def, 0),
             Hwndmatcher('Double Commander', '', mon_idx_def, 1),
             Hwndmatcher('Visual Studio Code', '', mon_idx_def, 1),
         ]

@@ -44,15 +44,15 @@ Return ; Auto-execute section ends here: https://autohotkey.com/docs/Scripts.htm
 
 ; Hotkey definitions
 ; ==============================================================================
-#left::
-    msg := "{""pc"": {""snap_active_in_drc"": [-1]}}"
-    WriteToPipe(msg)
-    return
+; #left::
+;     msg := "{""pc"": {""snap_active_in_drc"": [-1]}}"
+;     WriteToPipe(msg)
+;     return
 
-#right::
-    msg := "{""pc"": {""snap_active_in_drc"": [1]}}"
-    WriteToPipe(msg)
-    return
+; #right::
+;     msg := "{""pc"": {""snap_active_in_drc"": [1]}}"
+;     WriteToPipe(msg)
+;     return
 
 #up::
     msg := "{""pc"": {""maximize_active"": []}}"
